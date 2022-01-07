@@ -18,9 +18,9 @@ import logging
 
 app = Flask(__name__)
 
-@app.route('/isAlive', methods=['GET'])
+@app.route('/isalive', methods=['GET'])
 def isAlive():
-	return Response(status=403)
+	return Response(status=200)
 
 if __name__=='__main__':
 	args = docopt(__doc__)
