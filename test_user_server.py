@@ -13,13 +13,13 @@ class TestUserSrv(unittest.TestCase):
 	SrvUrl = "http://" + SrvAddr + ":" + TestPort
 
 	def setUp(self):
-		cmd = "python UserSrv.py --port="+self.TestPort
+		cmd = "python user_server.py --port="+self.TestPort
 		args = shlex.split(cmd)
 		self.SrvSubprocess  = subprocess.Popen(args) # launch command as a subprocess
 		time.sleep(3)
 
 	def tearDown(self):
-		print("killing subprocess UserSrv")
+		print("killing subprocess user_server")
 		self.SrvSubprocess.kill()
 		self.SrvSubprocess.wait()
 
