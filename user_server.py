@@ -1,17 +1,20 @@
 """UserSrv
 
 Usage:
-	UserSrv.py --port=<int>
+	UserSrv.py --port=<int> --db=<path_to_database>
 
 Options:
 	-h --help     Show this screen.
 	--port=<int>  port used
+	--db=<path_to_database> path to the database
 
 """
 import logging
 from docopt import docopt
 from flask import Flask, Response, request, jsonify
 from flask_json_schema import JsonSchema, JsonValidationError
+from pypastebin import db_handling
+import os
 
 APP = Flask(__name__)
 SCHEMA = JsonSchema(APP)
@@ -49,7 +52,11 @@ def login():
 
 if __name__ == '__main__':
 	ARGS = docopt(__doc__)
-	if ARGS['--port']:
+	if ARGS['--port'] and ARGS['--db']:
+		DATABASE_PATH = ARGS['--db']
+		if not os.path.isfile(DATABASE_PATH):
+			db_handling.CreateDb(DATABASE_PATH)
+
 		APP.run(host='0.0.0.0', port=ARGS['--port'])
 	else:
 		logging.error("Wrong command line arguments")
