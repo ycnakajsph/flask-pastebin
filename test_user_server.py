@@ -3,6 +3,7 @@ import requests
 import shlex
 import subprocess
 import time
+import os
 
 class TestUserSrv(unittest.TestCase):
 
@@ -11,9 +12,10 @@ class TestUserSrv(unittest.TestCase):
 	TestPort = "9009"
 	SrvAddr = "127.0.0.1"
 	SrvUrl = "http://" + SrvAddr + ":" + TestPort
+	test_db = "test_db.db"
 
 	def setUp(self):
-		cmd = "python user_server.py --port="+self.TestPort
+		cmd = "python user_server.py --port="+self.TestPort+" --db="+self.test_db
 		args = shlex.split(cmd)
 		self.SrvSubprocess  = subprocess.Popen(args) # launch command as a subprocess
 		time.sleep(1)
@@ -22,6 +24,8 @@ class TestUserSrv(unittest.TestCase):
 		print("killing subprocess user_server")
 		self.SrvSubprocess.kill()
 		self.SrvSubprocess.wait()
+		if os.path.isfile(self.test_db):
+			os.remove(self.test_db)
 
 	# can be tested with :
 	# $ curl -X GET 127.0.0.1:<port>/isalive
@@ -41,6 +45,13 @@ class TestUserSrv(unittest.TestCase):
 		response = requests.post(self.SrvUrl+"/login",json={"username":"value1", "password":"value2"})
 		self.assertEqual(response.status_code,200)
 
+	def test_add_user(self):
+		response = requests.post(self.SrvUrl+"/add/user",json={"username":"aaaa", "password":"aAaa#a9aa"})
+		self.assertEqual(response.status_code,200)
+		response = requests.post(self.SrvUrl+"/add/user",json={"username":"aaaa", "password":"aAaa#a9aa"})
+		self.assertEqual(response.status_code,400) # can't add twice the same user
+		response = requests.post(self.SrvUrl+"/add/user",json={"username":"bbbb", "password":"a"})
+		self.assertEqual(response.status_code,400) # can't add a bad user/password couple
 
 
 if __name__ == '__main__':

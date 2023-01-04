@@ -19,6 +19,9 @@ import os
 APP = Flask(__name__)
 SCHEMA = JsonSchema(APP)
 
+def send_status(status,msg,code):
+	return jsonify({"status": status, "msg":msg}), code
+
 @APP.errorhandler(JsonValidationError)
 def validation_error(json_error):
 	error = { \
@@ -50,13 +53,23 @@ def login():
 		return Response(status=200)
 	return Response(status=400)
 
+@APP.route('/add/user', methods=['POST'])
+@SCHEMA.validate(LOGIN_SCHEMA)
+def add_user():
+	json_payload = request.json
+	if json_payload is not None:
+		ret = db_handling.AddUser(DATABASE_PATH,json_payload["username"],json_payload["password"])
+		if not ret:
+			return send_status("error","failed to create user",400)
+		return send_status("ok","created user "+json_payload["username"],200)
+	return Response(status=400)
+
 if __name__ == '__main__':
 	ARGS = docopt(__doc__)
 	if ARGS['--port'] and ARGS['--db']:
 		DATABASE_PATH = ARGS['--db']
 		if not os.path.isfile(DATABASE_PATH):
 			db_handling.CreateDb(DATABASE_PATH)
-
 		APP.run(host='0.0.0.0', port=ARGS['--port'])
 	else:
 		logging.error("Wrong command line arguments")
