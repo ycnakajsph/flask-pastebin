@@ -3,11 +3,11 @@ import json
 import os
 
 def CheckUsername(username):
-	if len(username) <= 3 :
+	if len(username) <= 3:
 		return False
 
-	for ch in username :
-		if not ch.isalnum() :
+	for ch in username:
+		if not ch.isalnum():
 			return False
 
 	return True
@@ -20,12 +20,12 @@ def CheckPassword(password):
 	has_number = False
 	has_upper = False
 	has_lower = False
-	for ch in password :
-		if not ch.isalnum() :
+	for ch in password:
+		if not ch.isalnum():
 			has_spec_char = True
-		if ch.isnumeric() :
+		if ch.isnumeric():
 			has_number = True
-		if ch.isupper() :
+		if ch.isupper():
 			has_upper = True
 		if ch.islower():
 			has_lower = True
@@ -47,13 +47,13 @@ def CreateDb(db_path):
 	con.close()
 	return True
 
-def AddUser(db_path,username,password):
-	if any ([not CheckUsername(username) , not CheckPassword(password)]):
+def AddUser(db_path, username, password):
+	if any([not CheckUsername(username), not CheckPassword(password)]):
 		return False
 	con = sqlite3.connect(db_path)
 	cur = con.cursor()
 	try:
-		cur.execute("INSERT INTO users VALUES (?,?,?)",(username,password,json.dumps({'links':[]})))
+		cur.execute("INSERT INTO users VALUES (?,?,?)", (username, password, json.dumps({'links':[]})))
 	except sqlite3.IntegrityError: # this means that we failed to insert
 		con.close()
 		return False
@@ -65,14 +65,13 @@ def GetUserLinks(db_path, username):
 	con = sqlite3.connect(db_path)
 	cur = con.cursor()
 	try:
-		cur.execute("SELECT link FROM users WHERE username=:username",{"username":username})
+		cur.execute("SELECT link FROM users WHERE username=:username", {"username":username})
 		ret = cur.fetchall()
 		con.close()
 		if len(ret) == 0: #that would mean this is a bad user
 			return None
 		links = ret[0][0]
 		links = json.loads(links)
-		# return json.loads(ret[0][0])["links"]
 		return links["links"]
 
 	except sqlite3.IntegrityError: # this means that we failed to insert
@@ -80,14 +79,14 @@ def GetUserLinks(db_path, username):
 		return None
 
 def AddLinkUser(db_path, username, link):
-	links = GetUserLinks(db_path,username)
+	links = GetUserLinks(db_path, username)
 	if links is not None:
 		links.append(link)
 
 		con = sqlite3.connect(db_path)
 		cur = con.cursor()
 		try:
-			cur.execute("UPDATE users SET link = ? WHERE username = ?",(json.dumps({'links':links}),username))
+			cur.execute("UPDATE users SET link = ? WHERE username = ?", (json.dumps({'links':links}), username))
 		except sqlite3.IntegrityError: # this means that we failed to insert
 			con.close()
 			return False
@@ -96,15 +95,13 @@ def AddLinkUser(db_path, username, link):
 		return True
 	return False
 
-
-
-def CheckUserLogin(db_path,username,password):
+def CheckUserLogin(db_path, username, password):
 	con = sqlite3.connect(db_path)
 	cur = con.cursor()
 
-	cur.execute("SELECT password FROM users WHERE username=:username",{"username":username})
+	cur.execute("SELECT password FROM users WHERE username=:username", {"username":username})
 	ret = cur.fetchall()
-	if len(ret) != 1 or password != ret[0][0] :
+	if len(ret) != 1 or password != ret[0][0]:
 		con.close()
 		return False
 	con.close()
@@ -115,10 +112,10 @@ def CheckDbHealth(db_path):
 	cur = con.cursor()
 	cur.execute("SELECT * FROM users")
 	ret = cur.fetchall()
-	if len(ret) == 0 :
+	if len(ret) == 0:
 		return True # empty Db is healthy..?
-	for usr in ret :
-		if any ([not CheckUsername(usr[0]) , not CheckPassword(usr[1])]):
+	for usr in ret:
+		if any([not CheckUsername(usr[0]), not CheckPassword(usr[1])]):
 			return False
 
 	return True

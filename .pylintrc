@@ -140,6 +140,13 @@ disable=print-statement,
         exception-escape,
         comprehension-escape,
         W0312,
+        W0311,
+        C0301,
+        W0702,
+        R0903,
+        C0330,
+        C0103,
+        C0114,
         C0116
 
 # Enable the message, report, category or checker with the given id(s). You can
@@ -199,7 +206,7 @@ indent-after-paren=4
 
 # String used as indentation unit. This is usually "    " (4 spaces) or "\t" (1
 # tab).
-indent-string='    '
+indent-string='\t'
 
 # Maximum number of characters on a single line.
 max-line-length=100
