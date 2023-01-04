@@ -1,4 +1,5 @@
 import sqlite3
+import json
 import os
 
 def CheckUsername(username):
@@ -52,13 +53,50 @@ def AddUser(db_path,username,password):
 	con = sqlite3.connect(db_path)
 	cur = con.cursor()
 	try:
-		cur.execute("INSERT INTO users VALUES (?,?,?)",(username,password,""))
+		cur.execute("INSERT INTO users VALUES (?,?,?)",(username,password,json.dumps({'links':[]})))
 	except sqlite3.IntegrityError: # this means that we failed to insert
 		con.close()
 		return False
 	con.commit()
 	con.close()
 	return True
+
+def GetUserLinks(db_path, username):
+	con = sqlite3.connect(db_path)
+	cur = con.cursor()
+	try:
+		cur.execute("SELECT link FROM users WHERE username=:username",{"username":username})
+		ret = cur.fetchall()
+		con.close()
+		if len(ret) == 0: #that would mean this is a bad user
+			return None
+		links = ret[0][0]
+		links = json.loads(links)
+		# return json.loads(ret[0][0])["links"]
+		return links["links"]
+
+	except sqlite3.IntegrityError: # this means that we failed to insert
+		con.close()
+		return None
+
+def AddLinkUser(db_path, username, link):
+	links = GetUserLinks(db_path,username)
+	if links is not None:
+		links.append(link)
+
+		con = sqlite3.connect(db_path)
+		cur = con.cursor()
+		try:
+			cur.execute("UPDATE users SET link = ? WHERE username = ?",(json.dumps({'links':links}),username))
+		except sqlite3.IntegrityError: # this means that we failed to insert
+			con.close()
+			return False
+		con.commit()
+		con.close()
+		return True
+	return False
+
+
 
 def CheckUserLogin(db_path,username,password):
 	con = sqlite3.connect(db_path)

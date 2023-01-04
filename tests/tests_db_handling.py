@@ -63,5 +63,17 @@ class TestFuncs(unittest.TestCase):
 		self.assertFalse(db_handling.CheckUserLogin(self.test_db,"aaaa","aAaa#a9a")) # Bad Password
 		self.assertFalse(db_handling.CheckUserLogin(self.test_db,"aaab","aAaa#a9aa")) # Bad Username
 
+	def test_GetUser(self):
+		self.assertTrue(db_handling.AddUser(self.test_db,"aaaa","aAaa#a9aa"))
+		self.assertEquals(db_handling.GetUserLinks(self.test_db, "aaaa"),[])
+		self.assertIsNone(db_handling.GetUserLinks(self.test_db, "bbbb"))
+
+	def test_AddLinkUser(self):
+		self.assertTrue(db_handling.AddUser(self.test_db,"aaaa","aAaa#a9aa"))
+		self.assertTrue(db_handling.AddLinkUser(self.test_db,"aaaa","toto"))
+		self.assertEquals(db_handling.GetUserLinks(self.test_db, "aaaa"),["toto"])
+		self.assertTrue(db_handling.AddLinkUser(self.test_db,"aaaa",""))
+		self.assertEquals(db_handling.GetUserLinks(self.test_db, "aaaa"),["toto",""])
+
 if __name__ == '__main__':
 	unittest.main()
