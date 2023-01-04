@@ -10,10 +10,7 @@ Options:
 """
 import logging
 from docopt import docopt
-from flask import Flask
-from flask import Response
-from flask import request
-from flask import jsonify
+from flask import Flask, Response, request, jsonify
 from flask_json_schema import JsonSchema, JsonValidationError
 
 APP = Flask(__name__)
