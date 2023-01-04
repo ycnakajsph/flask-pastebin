@@ -1,6 +1,10 @@
 import sqlite3
 import json
 import os
+import uuid
+
+def GetLinkToken():
+	return str(uuid.uuid4())
 
 def CheckUsername(username):
 	if len(username) <= 3:

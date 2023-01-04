@@ -3,6 +3,7 @@ import string
 import random
 import sqlite3
 import os
+import re
 
 from pypastebin import db_handling
 
@@ -74,6 +75,12 @@ class TestFuncs(unittest.TestCase):
 		self.assertEquals(db_handling.GetUserLinks(self.test_db, "aaaa"),["toto"])
 		self.assertTrue(db_handling.AddLinkUser(self.test_db,"aaaa",""))
 		self.assertEquals(db_handling.GetUserLinks(self.test_db, "aaaa"),["toto",""])
+
+	def test_GetLinkToken(self):
+		regex = re.compile('^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}\Z', re.I)
+		uuid_token = db_handling.GetLinkToken()
+		match = regex.match(uuid_token) # just checking that we are getting a string like uuid as intended
+		self.assertTrue(bool(match))
 
 if __name__ == '__main__':
 	unittest.main()
