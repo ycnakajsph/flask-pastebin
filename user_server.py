@@ -15,7 +15,7 @@ from docopt import docopt
 from flask import Flask, Response, request, jsonify
 from flask_json_schema import JsonSchema, JsonValidationError
 from pypastebin import db_handling
-from schemas.schemas import *
+from schemas.schemas import *  # pylint: disable=W0401
 
 APP = Flask(__name__)
 SCHEMA = JsonSchema(APP)

@@ -115,7 +115,5 @@ class TestUserSrv(unittest.TestCase):
 		response = requests.get(self.SrvUrl+"/get/link",json={"link":"whatever"})
 		self.assertEqual(response.status_code,400)
 
-
-
 if __name__ == '__main__':
 	unittest.main()
