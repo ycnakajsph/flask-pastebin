@@ -65,6 +65,21 @@ def AddUser(db_path, username, password):
 	con.close()
 	return True
 
+def RemoveUser(db_path,username):
+	con = sqlite3.connect(db_path)
+	cur = con.cursor()
+	try:
+		cur.execute("DELETE FROM users WHERE username=:username", {"username":username})
+		con.commit()
+		if cur.rowcount == 0: # this means no collumn where affected
+			return False
+		con.close()
+		return True
+
+	except sqlite3.Error: # this means that we failed to insert
+		con.close()
+		return False
+
 def GetUserLinks(db_path, username):
 	con = sqlite3.connect(db_path)
 	cur = con.cursor()

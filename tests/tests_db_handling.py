@@ -82,5 +82,20 @@ class TestFuncs(unittest.TestCase):
 		match = regex.match(uuid_token) # just checking that we are getting a string like uuid as intended
 		self.assertTrue(bool(match))
 
+	def test_RemoveUser(self):
+		self.assertTrue(db_handling.AddUser(self.test_db,"aaaa","aAaa#a9aa"))
+		self.assertTrue(db_handling.RemoveUser(self.test_db,"aaaa"))
+
+		con = sqlite3.connect(self.test_db)
+		cur = con.execute('select * from USERS')
+		ret = cur.fetchall()
+
+		self.assertEquals(len(ret),0)
+
+		con.close()
+
+	def test_RemoveUser_NoSuchUser(self):
+		self.assertFalse(db_handling.RemoveUser(self.test_db,"aaaa"))
+
 if __name__ == '__main__':
 	unittest.main()
