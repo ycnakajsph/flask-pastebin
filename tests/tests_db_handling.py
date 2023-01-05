@@ -79,9 +79,9 @@ class TestFuncs(unittest.TestCase):
 		self.assertTrue(db_handling.AddLinkUser(self.test_db,"aaaa",""))
 		self.assertEquals(db_handling.GetUserLinks(self.test_db, "aaaa"),["toto",""])
 
-	def test_GetLinkToken(self):
+	def test_GetUuidToken(self):
 		regex = re.compile('^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}\Z', re.I)
-		uuid_token = db_handling.GetLinkToken()
+		uuid_token = db_handling.GetUuidToken()
 		match = regex.match(uuid_token) # just checking that we are getting a string like uuid as intended
 		self.assertTrue(bool(match))
 
@@ -101,7 +101,7 @@ class TestFuncs(unittest.TestCase):
 		self.assertFalse(db_handling.RemoveUser(self.test_db,"aaaa"))
 
 	def test_AddLinkTokenContent(self):
-		token = db_handling.GetLinkToken()
+		token = db_handling.GetUuidToken()
 		content = "lorem ipsum... blablabla"
 		self.assertTrue(db_handling.AddLinkTokenContent(self.test_db, token, content))
 
@@ -117,8 +117,17 @@ class TestFuncs(unittest.TestCase):
 
 		self.assertFalse(db_handling.AddLinkTokenContent(self.test_db, token, content)) # can't have twice the same token
 
+	def test_GetLinkTokenContent(self):
+		token = db_handling.GetUuidToken()
+		content = "lorem ipsum... blablabla"
+		self.assertTrue(db_handling.AddLinkTokenContent(self.test_db, token, content))
+
+		self.assertEqual(db_handling.GetLinkTokenContent(self.test_db, token),content)
+
+		self.assertIsNone(db_handling.GetLinkTokenContent(self.test_db, "bad token"))
+
 	def test_RemoveLinkToken(self):
-		token = db_handling.GetLinkToken()
+		token = db_handling.GetUuidToken()
 		content = "lorem ipsum... blablabla"
 		self.assertTrue(db_handling.AddLinkTokenContent(self.test_db, token, content))
 

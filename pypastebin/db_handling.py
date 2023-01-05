@@ -3,7 +3,7 @@ import json
 import os
 import uuid
 
-def GetLinkToken():
+def GetUuidToken():
 	return str(uuid.uuid4())
 
 def CheckUsername(username):
@@ -139,6 +139,22 @@ def AddLinkTokenContent(db_path, token, content):
 	con.commit()
 	con.close()
 	return True
+
+def GetLinkTokenContent(db_path, token):
+	con = sqlite3.connect(db_path)
+	cur = con.cursor()
+	try:
+		cur.execute("SELECT content FROM links WHERE token=?", (token,))
+		ret = cur.fetchall()
+		con.close()
+		if len(ret) != 1:
+			return None
+		content = ret[0][0]
+		return content
+
+	except sqlite3.IntegrityError:
+		con.close()
+		return None
 
 def RemoveLinkToken(db_path, token):
 	con = sqlite3.connect(db_path)

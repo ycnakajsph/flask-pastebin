@@ -97,7 +97,7 @@ ADD_USER_LINK_SCHEMA = { \
 def add_user_content():
 	json_payload = request.json
 	if json_payload is not None:
-		token = db_handling.GetLinkToken()
+		token = db_handling.GetUuidToken()
 		ret = db_handling.AddLinkUser(DATABASE_PATH, json_payload["username"], token)
 		if not ret:
 			return send_status("error", "failed to add content to user "+json_payload["username"], 400)
@@ -130,6 +130,24 @@ def remove_user_link():
 		if not ret:
 			return send_status("error", "failed to remove link "+json_payload["link"]+" from user "+json_payload["username"], 400)
 		return send_status("ok", "removed link "+json_payload["link"]+" from user "+json_payload["username"], 200)
+	return Response(status=400)
+
+GET_LINK_SCHEMA = { \
+	"type" : "object", \
+	"required" : ["link"], \
+	"properties" : { \
+		"link" : {"type" : "string"}, \
+	}, \
+}
+@APP.route('/get/link', methods=['GET'])
+@SCHEMA.validate(GET_LINK_SCHEMA)
+def get_link():
+	json_payload = request.json
+	if json_payload is not None:
+		content = db_handling.GetLinkTokenContent(DATABASE_PATH, json_payload["link"])
+		if content is not None:
+			return jsonify({"status": "ok", "msg":"found content for "+json_payload["link"], "content":content}), 200
+		return send_status("error", "could not find content for "+json_payload["link"], 400)
 	return Response(status=400)
 
 if __name__ == '__main__':

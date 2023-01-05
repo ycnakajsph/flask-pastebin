@@ -94,6 +94,27 @@ class TestUserSrv(unittest.TestCase):
 		response = requests.post(self.SrvUrl+"/remove/user/link",json={"username":"bbbb", "link":link})
 		self.assertEqual(response.status_code,400) # can't remove unexisting user
 
+	def test_get_link(self):
+		response = requests.post(self.SrvUrl+"/add/user",json={"username":"aaaa", "password":"aAaa#a9aa"})
+		self.assertEqual(response.status_code,200)
+		txt = "lorem ipsum... blablabla"
+
+		response = requests.post(self.SrvUrl+"/add/user/content",json={"username":"aaaa", "content":txt})
+		self.assertEqual(response.status_code,200)
+		resp_js = response.json()
+
+		link = resp_js["link"]
+
+		response = requests.get(self.SrvUrl+"/get/link",json={"link":link})
+		self.assertEqual(response.status_code,200)
+		resp_js = response.json()
+		content = resp_js["content"]
+
+		self.assertEqual(content,txt)
+
+		response = requests.get(self.SrvUrl+"/get/link",json={"link":"whatever"})
+		self.assertEqual(response.status_code,400)
+
 
 
 if __name__ == '__main__':
