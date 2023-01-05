@@ -108,6 +108,19 @@ def get_link():
 		return send_status("error", "could not find content for "+json_payload["link"], 400)
 	return Response(status=400)
 
+@APP.route('/add/content', methods=['POST'])
+@SCHEMA.validate(ADD_CONTENT_SCHEMA)
+def add_content():
+	json_payload = request.json
+	if json_payload is not None:
+		token = db_handling.GetUuidToken()
+		ret = db_handling.AddLinkTokenContent(DATABASE_PATH, token, json_payload["content"])
+		if not ret:
+			return send_status("error", "failed to add content", 400)
+
+		return jsonify({"status": "ok", "msg":"added content", "link":token}), 200
+	return Response(status=400)
+
 if __name__ == '__main__':
 	ARGS = docopt(__doc__)
 	if ARGS['--port'] and ARGS['--db']:

@@ -115,5 +115,24 @@ class TestUserSrv(unittest.TestCase):
 		response = requests.get(self.SrvUrl+"/get/link",json={"link":"whatever"})
 		self.assertEqual(response.status_code,400)
 
+
+	def test_add_content(self):
+		txt = "lorem ipsum... blablabla"
+		response = requests.post(self.SrvUrl+"/add/content",json={"content":txt})
+		self.assertEqual(response.status_code,200)
+
+		resp_js = response.json()
+		self.assertEqual(resp_js["status"],"ok")
+		self.assertIn("link",resp_js)
+
+		link = resp_js["link"]
+
+		response = requests.get(self.SrvUrl+"/get/link",json={"link":link})
+		self.assertEqual(response.status_code,200)
+		resp_js = response.json()
+		content = resp_js["content"]
+
+		self.assertEqual(content,txt)
+
 if __name__ == '__main__':
 	unittest.main()

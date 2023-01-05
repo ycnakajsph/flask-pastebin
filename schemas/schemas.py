@@ -40,3 +40,11 @@ GET_LINK_SCHEMA = { \
 		"link" : {"type" : "string"}, \
 	}, \
 }
+
+ADD_CONTENT_SCHEMA = { \
+	"type" : "object", \
+	"required" : ["content"], \
+	"properties" : { \
+		"content" : {"type" : "string"}, \
+	}, \
+}
