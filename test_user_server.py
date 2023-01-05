@@ -59,7 +59,6 @@ class TestUserSrv(unittest.TestCase):
 		response = requests.post(self.SrvUrl+"/remove/user",json={"username":"aaaa"})
 		self.assertEqual(response.status_code,200)
 
-
 		response = requests.post(self.SrvUrl+"/remove/user",json={"username":"bbbb"})
 		self.assertEqual(response.status_code,400)
 
@@ -71,13 +70,31 @@ class TestUserSrv(unittest.TestCase):
 		self.assertEqual(response.status_code,200)
 
 		resp_js = response.json()
-		print(resp_js)
 		self.assertEqual(resp_js["status"],"ok")
 		self.assertIn("link",resp_js)
 
 	def test_add_user_content_bad_user(self):
 		response = requests.post(self.SrvUrl+"/add/user/content",json={"username":"aaaa", "content":"lorem ipsum... blablabla"})
 		self.assertEqual(response.status_code,400)
+
+	def test_remove_user_link(self):
+		response = requests.post(self.SrvUrl+"/add/user",json={"username":"aaaa", "password":"aAaa#a9aa"})
+		self.assertEqual(response.status_code,200)
+
+		response = requests.post(self.SrvUrl+"/add/user/content",json={"username":"aaaa", "content":"lorem ipsum... blablabla"})
+		self.assertEqual(response.status_code,200)
+		resp_js = response.json()
+
+		link = resp_js["link"]
+		response = requests.post(self.SrvUrl+"/remove/user/link",json={"username":"aaaa", "link":link})
+		self.assertEqual(response.status_code,200)
+
+		response = requests.post(self.SrvUrl+"/remove/user/link",json={"username":"aaaa", "link":link})
+		self.assertEqual(response.status_code,400) # can't remove unexisting link
+		response = requests.post(self.SrvUrl+"/remove/user/link",json={"username":"bbbb", "link":link})
+		self.assertEqual(response.status_code,400) # can't remove unexisting user
+
+
 
 if __name__ == '__main__':
 	unittest.main()

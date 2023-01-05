@@ -70,7 +70,7 @@ def AddUser(db_path, username, password):
 	con.close()
 	return True
 
-def RemoveUser(db_path,username):
+def RemoveUser(db_path, username):
 	con = sqlite3.connect(db_path)
 	cur = con.cursor()
 	try:
@@ -118,16 +118,15 @@ def AddLinkUser(db_path, username, link):
 	links = GetUserLinks(db_path, username)
 	if links is not None:
 		links.append(link)
-		return SetLinksUser(db_path, username,links)
+		return SetLinksUser(db_path, username, links)
 	return False
 
 def RemoveLinkUser(db_path, username, token):
 	links = GetUserLinks(db_path, username)
 	if links is not None and token in links:
 		links.remove(token)
-		return SetLinksUser(db_path, username,links)
-	else:
-		return False
+		return SetLinksUser(db_path, username, links)
+	return False
 
 def AddLinkTokenContent(db_path, token, content):
 	con = sqlite3.connect(db_path)
@@ -141,7 +140,7 @@ def AddLinkTokenContent(db_path, token, content):
 	con.close()
 	return True
 
-def RemoveLinkToken(db_path,token):
+def RemoveLinkToken(db_path, token):
 	con = sqlite3.connect(db_path)
 	cur = con.cursor()
 	try:

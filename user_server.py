@@ -9,17 +9,17 @@ Options:
 	--db=<path_to_database> path to the database
 
 """
+import os
 import logging
 from docopt import docopt
 from flask import Flask, Response, request, jsonify
 from flask_json_schema import JsonSchema, JsonValidationError
 from pypastebin import db_handling
-import os
 
 APP = Flask(__name__)
 SCHEMA = JsonSchema(APP)
 
-def send_status(status,msg,code):
+def send_status(status, msg, code):
 	return jsonify({"status": status, "msg":msg}), code
 
 @APP.errorhandler(JsonValidationError)
@@ -58,10 +58,10 @@ def login():
 def add_user():
 	json_payload = request.json
 	if json_payload is not None:
-		ret = db_handling.AddUser(DATABASE_PATH,json_payload["username"],json_payload["password"])
+		ret = db_handling.AddUser(DATABASE_PATH, json_payload["username"], json_payload["password"])
 		if not ret:
-			return send_status("error","failed to create user",400)
-		return send_status("ok","created user "+json_payload["username"],200)
+			return send_status("error", "failed to create user", 400)
+		return send_status("ok", "created user "+json_payload["username"], 200)
 	return Response(status=400)
 
 REMOVE_USER_SCHEMA = { \
@@ -77,13 +77,12 @@ REMOVE_USER_SCHEMA = { \
 def remove_user():
 	json_payload = request.json
 	if json_payload is not None:
-		ret = db_handling.RemoveUser(DATABASE_PATH,json_payload["username"])
+		ret = db_handling.RemoveUser(DATABASE_PATH, json_payload["username"])
 		if not ret:
-			return send_status("error","failed to remove user "+json_payload["username"],400)
-		return send_status("ok","removed user "+json_payload["username"],200)
+			return send_status("error", "failed to remove user "+json_payload["username"], 400)
+		return send_status("ok", "removed user "+json_payload["username"], 200)
 	return Response(status=400)
 
-# of course schemas shall go in a separated folder
 ADD_USER_LINK_SCHEMA = { \
 	"type" : "object", \
 	"required" : ["username", "content"], \
@@ -101,13 +100,36 @@ def add_user_content():
 		token = db_handling.GetLinkToken()
 		ret = db_handling.AddLinkUser(DATABASE_PATH, json_payload["username"], token)
 		if not ret:
-			return send_status("error","failed to add content to user "+json_payload["username"],400)
+			return send_status("error", "failed to add content to user "+json_payload["username"], 400)
 
 		ret = db_handling.AddLinkTokenContent(DATABASE_PATH, token, json_payload["content"])
 		if not ret:
-			return send_status("error","failed to add content to user "+json_payload["username"],400)
+			return send_status("error", "failed to add content to user "+json_payload["username"], 400)
 
-		return jsonify({"status": "ok", "msg":"added content to user "+json_payload["username"],"link":token}), 200
+		return jsonify({"status": "ok", "msg":"added content to user "+json_payload["username"], "link":token}), 200
+	return Response(status=400)
+
+REMOVE_USER_LINK_SCHEMA = { \
+	"type" : "object", \
+	"required" : ["username", "link"], \
+	"properties" : { \
+		"username" : {"type" : "string"}, \
+		"link" : {"type" : "string"}, \
+	}, \
+}
+
+@APP.route('/remove/user/link', methods=['POST'])
+@SCHEMA.validate(REMOVE_USER_LINK_SCHEMA)
+def remove_user_link():
+	json_payload = request.json
+	if json_payload is not None:
+		ret = db_handling.RemoveLinkUser(DATABASE_PATH, json_payload["username"], json_payload["link"])
+		if not ret:
+			return send_status("error", "failed to remove link "+json_payload["link"]+" from user "+json_payload["username"], 400)
+		ret = db_handling.RemoveLinkToken(DATABASE_PATH, json_payload["link"])
+		if not ret:
+			return send_status("error", "failed to remove link "+json_payload["link"]+" from user "+json_payload["username"], 400)
+		return send_status("ok", "removed link "+json_payload["link"]+" from user "+json_payload["username"], 200)
 	return Response(status=400)
 
 if __name__ == '__main__':
