@@ -28,7 +28,7 @@ def validation_error(json_error):
 		'error': json_error.message, \
 		'errors': [validation_error.message for validation_error in json_error.errors] \
 	}
-	return jsonify(error), 400
+	return jsonify(error), 403
 
 @APP.route('/isalive', methods=['GET'])
 def is_alive():
@@ -64,7 +64,7 @@ def add_user():
 		return send_status("ok","created user "+json_payload["username"],200)
 	return Response(status=400)
 
-REMOVE_SCHEMA = { \
+REMOVE_USER_SCHEMA = { \
 	"type" : "object", \
 	"required" : ["username"], \
 	"properties" : { \
@@ -73,7 +73,7 @@ REMOVE_SCHEMA = { \
 }
 
 @APP.route('/remove/user', methods=['POST'])
-@SCHEMA.validate(REMOVE_SCHEMA)
+@SCHEMA.validate(REMOVE_USER_SCHEMA)
 def remove_user():
 	json_payload = request.json
 	if json_payload is not None:
@@ -81,6 +81,33 @@ def remove_user():
 		if not ret:
 			return send_status("error","failed to remove user "+json_payload["username"],400)
 		return send_status("ok","removed user "+json_payload["username"],200)
+	return Response(status=400)
+
+# of course schemas shall go in a separated folder
+ADD_USER_LINK_SCHEMA = { \
+	"type" : "object", \
+	"required" : ["username", "content"], \
+	"properties" : { \
+		"username" : {"type" : "string"}, \
+		"content" : {"type" : "string"}, \
+	}, \
+}
+
+@APP.route('/add/user/content', methods=['POST'])
+@SCHEMA.validate(ADD_USER_LINK_SCHEMA)
+def add_user_content():
+	json_payload = request.json
+	if json_payload is not None:
+		token = db_handling.GetLinkToken()
+		ret = db_handling.AddLinkUser(DATABASE_PATH, json_payload["username"], token)
+		if not ret:
+			return send_status("error","failed to add content to user "+json_payload["username"],400)
+
+		ret = db_handling.AddLinkTokenContent(DATABASE_PATH, token, json_payload["content"])
+		if not ret:
+			return send_status("error","failed to add content to user "+json_payload["username"],400)
+
+		return jsonify({"status": "ok", "msg":"added content to user "+json_payload["username"],"link":token}), 200
 	return Response(status=400)
 
 if __name__ == '__main__':

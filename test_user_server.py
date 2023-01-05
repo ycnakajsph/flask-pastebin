@@ -37,10 +37,10 @@ class TestUserSrv(unittest.TestCase):
 	# $ curl -v -X POST 127.0.0.1:9009/login -H "Content-Type: application/json"  -d '{"username":"value1", "password":"value2"}'
 	def test_login(self):
 		response = requests.post(self.SrvUrl+"/login")
-		self.assertEqual(response.status_code,400) #missing json payload
+		self.assertEqual(response.status_code,403) #missing json payload
 
 		response = requests.post(self.SrvUrl+"/login",json={"key": "value"})
-		self.assertEqual(response.status_code,400) # bad json payload
+		self.assertEqual(response.status_code,403) # bad json payload
 
 		response = requests.post(self.SrvUrl+"/login",json={"username":"value1", "password":"value2"})
 		self.assertEqual(response.status_code,200)
@@ -61,6 +61,22 @@ class TestUserSrv(unittest.TestCase):
 
 
 		response = requests.post(self.SrvUrl+"/remove/user",json={"username":"bbbb"})
+		self.assertEqual(response.status_code,400)
+
+	def test_add_user_content(self):
+		response = requests.post(self.SrvUrl+"/add/user",json={"username":"aaaa", "password":"aAaa#a9aa"})
+		self.assertEqual(response.status_code,200)
+
+		response = requests.post(self.SrvUrl+"/add/user/content",json={"username":"aaaa", "content":"lorem ipsum... blablabla"})
+		self.assertEqual(response.status_code,200)
+
+		resp_js = response.json()
+		print(resp_js)
+		self.assertEqual(resp_js["status"],"ok")
+		self.assertIn("link",resp_js)
+
+	def test_add_user_content_bad_user(self):
+		response = requests.post(self.SrvUrl+"/add/user/content",json={"username":"aaaa", "content":"lorem ipsum... blablabla"})
 		self.assertEqual(response.status_code,400)
 
 if __name__ == '__main__':
