@@ -42,12 +42,15 @@ class TestFuncs(unittest.TestCase):
 			os.remove(self.test_db)
 		self.assertTrue(db_handling.CreateDb(self.test_db))
 		# Let's check that the created db has all necessary tables and fields
-
 		con = sqlite3.connect(self.test_db)
 		cursor = con.execute('select * from USERS')
 		names = list(map(lambda x: x[0], cursor.description))
 		self.assertIn("username",names)
 		self.assertIn("password",names)
+		cursor = con.execute('select * from LINKS')
+		names = list(map(lambda x: x[0], cursor.description))
+		self.assertIn("token",names)
+		self.assertIn("content",names)
 
 		self.assertFalse(db_handling.CreateDb(self.test_db)) # verifying we cannot recreate the db
 
@@ -96,6 +99,51 @@ class TestFuncs(unittest.TestCase):
 
 	def test_RemoveUser_NoSuchUser(self):
 		self.assertFalse(db_handling.RemoveUser(self.test_db,"aaaa"))
+
+	def test_AddLinkTokenContent(self):
+		token = db_handling.GetLinkToken()
+		content = "lorem ipsum... blablabla"
+		self.assertTrue(db_handling.AddLinkTokenContent(self.test_db, token, content))
+
+		con = sqlite3.connect(self.test_db)
+		cur = con.execute('select * from links')
+		ret = cur.fetchall()
+
+		self.assertEquals(len(ret),1)
+		self.assertEquals(ret[0][0],token)
+		self.assertEquals(ret[0][1],content)
+
+		con.close()
+
+		self.assertFalse(db_handling.AddLinkTokenContent(self.test_db, token, content)) # can't have twice the same token
+
+	def test_RemoveLinkToken(self):
+		token = db_handling.GetLinkToken()
+		content = "lorem ipsum... blablabla"
+		self.assertTrue(db_handling.AddLinkTokenContent(self.test_db, token, content))
+
+		self.assertTrue(db_handling.RemoveLinkToken(self.test_db, token))
+
+		con = sqlite3.connect(self.test_db)
+		cur = con.execute('select * from links')
+		ret = cur.fetchall()
+
+		self.assertEquals(len(ret),0)
+
+		con.close()
+
+		self.assertFalse(db_handling.RemoveLinkToken(self.test_db, token)) # can't remove non existing token
+
+	def test_RemoveLinkUser(self):
+		self.assertTrue(db_handling.AddUser(self.test_db,"aaaa","aAaa#a9aa"))
+		self.assertTrue(db_handling.AddLinkUser(self.test_db,"aaaa","toto"))
+		self.assertEquals(db_handling.GetUserLinks(self.test_db, "aaaa"),["toto"])
+		self.assertTrue(db_handling.AddLinkUser(self.test_db,"aaaa","tata"))
+		self.assertEquals(db_handling.GetUserLinks(self.test_db, "aaaa"),["toto","tata"])
+
+		self.assertTrue(db_handling.RemoveLinkUser(self.test_db,"aaaa","toto"))
+		self.assertEquals(db_handling.GetUserLinks(self.test_db, "aaaa"),["tata"])
+
 
 if __name__ == '__main__':
 	unittest.main()

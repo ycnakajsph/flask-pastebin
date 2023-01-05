@@ -48,6 +48,11 @@ def CreateDb(db_path):
 			link TEXT
 			)''')
 	con.commit()
+	cur.execute('''CREATE TABLE links
+			(token TEXT NOT NULL UNIQUE ,
+			content TEXT NOT NULL
+			)''')
+	con.commit()
 	con.close()
 	return True
 
@@ -97,22 +102,60 @@ def GetUserLinks(db_path, username):
 		con.close()
 		return None
 
+def SetLinksUser(db_path, username, links):
+	con = sqlite3.connect(db_path)
+	cur = con.cursor()
+	try:
+		cur.execute("UPDATE users SET link = ? WHERE username = ?", (json.dumps({'links':links}), username))
+	except sqlite3.IntegrityError: # this means that we failed to insert
+		con.close()
+		return False
+	con.commit()
+	con.close()
+	return True
+
 def AddLinkUser(db_path, username, link):
 	links = GetUserLinks(db_path, username)
 	if links is not None:
 		links.append(link)
+		return SetLinksUser(db_path, username,links)
+	return False
 
-		con = sqlite3.connect(db_path)
-		cur = con.cursor()
-		try:
-			cur.execute("UPDATE users SET link = ? WHERE username = ?", (json.dumps({'links':links}), username))
-		except sqlite3.IntegrityError: # this means that we failed to insert
-			con.close()
-			return False
+def RemoveLinkUser(db_path, username, token):
+	links = GetUserLinks(db_path, username)
+	if links is not None and token in links:
+		links.remove(token)
+		return SetLinksUser(db_path, username,links)
+	else:
+		return False
+
+def AddLinkTokenContent(db_path, token, content):
+	con = sqlite3.connect(db_path)
+	cur = con.cursor()
+	try:
+		cur.execute("INSERT INTO links VALUES (?,?)", (token, content))
+	except sqlite3.IntegrityError: # this means that we failed to insert
+		con.close()
+		return False
+	con.commit()
+	con.close()
+	return True
+
+def RemoveLinkToken(db_path,token):
+	con = sqlite3.connect(db_path)
+	cur = con.cursor()
+	try:
+		cur.execute("DELETE FROM links WHERE token=?", (token,))
 		con.commit()
+		if cur.rowcount == 0: # this means no collumn where affected
+			return False
 		con.close()
 		return True
-	return False
+
+	except sqlite3.Error: # this means that we failed to insert
+		con.close()
+		return False
+
 
 def CheckUserLogin(db_path, username, password):
 	con = sqlite3.connect(db_path)
