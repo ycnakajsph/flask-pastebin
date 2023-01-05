@@ -56,10 +56,10 @@ class TestUserSrv(unittest.TestCase):
 	def test_remove_user(self):
 		response = requests.post(self.SrvUrl+"/add/user",json={"username":"aaaa", "password":"aAaa#a9aa"})
 		self.assertEqual(response.status_code,200)
-		response = requests.post(self.SrvUrl+"/remove/user",json={"username":"aaaa"})
+		response = requests.delete(self.SrvUrl+"/remove/user",json={"username":"aaaa"})
 		self.assertEqual(response.status_code,200)
 
-		response = requests.post(self.SrvUrl+"/remove/user",json={"username":"bbbb"})
+		response = requests.delete(self.SrvUrl+"/remove/user",json={"username":"bbbb"})
 		self.assertEqual(response.status_code,400)
 
 	def test_add_user_content(self):

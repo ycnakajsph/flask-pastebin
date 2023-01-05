@@ -15,6 +15,7 @@ from docopt import docopt
 from flask import Flask, Response, request, jsonify
 from flask_json_schema import JsonSchema, JsonValidationError
 from pypastebin import db_handling
+from schemas.schemas import *
 
 APP = Flask(__name__)
 SCHEMA = JsonSchema(APP)
@@ -33,16 +34,6 @@ def validation_error(json_error):
 @APP.route('/isalive', methods=['GET'])
 def is_alive():
 	return Response(status=200)
-
-# of course schemas shall go in a separated folder
-LOGIN_SCHEMA = { \
-	"type" : "object", \
-	"required" : ["username", "password"], \
-	"properties" : { \
-		"username" : {"type" : "string"}, \
-		"password" : {"type" : "string"}, \
-	}, \
-}
 
 @APP.route('/login', methods=['POST'])
 @SCHEMA.validate(LOGIN_SCHEMA)
@@ -64,15 +55,7 @@ def add_user():
 		return send_status("ok", "created user "+json_payload["username"], 200)
 	return Response(status=400)
 
-REMOVE_USER_SCHEMA = { \
-	"type" : "object", \
-	"required" : ["username"], \
-	"properties" : { \
-		"username" : {"type" : "string"}, \
-	}, \
-}
-
-@APP.route('/remove/user', methods=['POST'])
+@APP.route('/remove/user', methods=['DELETE'])
 @SCHEMA.validate(REMOVE_USER_SCHEMA)
 def remove_user():
 	json_payload = request.json
@@ -82,15 +65,6 @@ def remove_user():
 			return send_status("error", "failed to remove user "+json_payload["username"], 400)
 		return send_status("ok", "removed user "+json_payload["username"], 200)
 	return Response(status=400)
-
-ADD_USER_LINK_SCHEMA = { \
-	"type" : "object", \
-	"required" : ["username", "content"], \
-	"properties" : { \
-		"username" : {"type" : "string"}, \
-		"content" : {"type" : "string"}, \
-	}, \
-}
 
 @APP.route('/add/user/content', methods=['POST'])
 @SCHEMA.validate(ADD_USER_LINK_SCHEMA)
@@ -109,15 +83,6 @@ def add_user_content():
 		return jsonify({"status": "ok", "msg":"added content to user "+json_payload["username"], "link":token}), 200
 	return Response(status=400)
 
-REMOVE_USER_LINK_SCHEMA = { \
-	"type" : "object", \
-	"required" : ["username", "link"], \
-	"properties" : { \
-		"username" : {"type" : "string"}, \
-		"link" : {"type" : "string"}, \
-	}, \
-}
-
 @APP.route('/remove/user/link', methods=['POST'])
 @SCHEMA.validate(REMOVE_USER_LINK_SCHEMA)
 def remove_user_link():
@@ -132,13 +97,6 @@ def remove_user_link():
 		return send_status("ok", "removed link "+json_payload["link"]+" from user "+json_payload["username"], 200)
 	return Response(status=400)
 
-GET_LINK_SCHEMA = { \
-	"type" : "object", \
-	"required" : ["link"], \
-	"properties" : { \
-		"link" : {"type" : "string"}, \
-	}, \
-}
 @APP.route('/get/link', methods=['GET'])
 @SCHEMA.validate(GET_LINK_SCHEMA)
 def get_link():
