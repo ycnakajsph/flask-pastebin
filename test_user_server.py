@@ -53,6 +53,15 @@ class TestUserSrv(unittest.TestCase):
 		response = requests.post(self.SrvUrl+"/add/user",json={"username":"bbbb", "password":"a"})
 		self.assertEqual(response.status_code,400) # can't add a bad user/password couple
 
+	def test_remove_user(self):
+		response = requests.post(self.SrvUrl+"/add/user",json={"username":"aaaa", "password":"aAaa#a9aa"})
+		self.assertEqual(response.status_code,200)
+		response = requests.post(self.SrvUrl+"/remove/user",json={"username":"aaaa"})
+		self.assertEqual(response.status_code,200)
+
+
+		response = requests.post(self.SrvUrl+"/remove/user",json={"username":"bbbb"})
+		self.assertEqual(response.status_code,400)
 
 if __name__ == '__main__':
 	unittest.main()

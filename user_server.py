@@ -64,6 +64,25 @@ def add_user():
 		return send_status("ok","created user "+json_payload["username"],200)
 	return Response(status=400)
 
+REMOVE_SCHEMA = { \
+	"type" : "object", \
+	"required" : ["username"], \
+	"properties" : { \
+		"username" : {"type" : "string"}, \
+	}, \
+}
+
+@APP.route('/remove/user', methods=['POST'])
+@SCHEMA.validate(REMOVE_SCHEMA)
+def remove_user():
+	json_payload = request.json
+	if json_payload is not None:
+		ret = db_handling.RemoveUser(DATABASE_PATH,json_payload["username"])
+		if not ret:
+			return send_status("error","failed to remove user "+json_payload["username"],400)
+		return send_status("ok","removed user "+json_payload["username"],200)
+	return Response(status=400)
+
 if __name__ == '__main__':
 	ARGS = docopt(__doc__)
 	if ARGS['--port'] and ARGS['--db']:
