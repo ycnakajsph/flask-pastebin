@@ -34,4 +34,16 @@ This endpoint will create add a new link to an existing user and stores the cont
 
 See schema : schemas/schemas.py ADD_USER_LINK_SCHEMA
 
+### @APP.route('/remove/user/link', methods=['DELETE'])
+
+This endpoint will remove a link of an existing user. It will also remove the content associated.
+
+See schema : schemas/schemas.py REMOVE_USER_LINK_SCHEMA
+
+### @APP.route('/get/link', methods=['GET'])
+
+This endpoint will return the content of a link.
+
+See schema : schemas/schemas.py GET_LINK_SCHEMA
+
 
