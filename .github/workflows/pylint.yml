@@ -17,7 +17,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install nose2 pylint flask flask-json-schema docopt requests
+        pip install nose2 pylint==2.4.4 flask flask-json-schema docopt requests
     - name: Analysing the user_server with pylint
       run: |
         pylint user_server.py
