@@ -20,6 +20,14 @@ from schemas.schemas import *  # pylint: disable=W0401
 APP = Flask(__name__)
 SCHEMA = JsonSchema(APP)
 
+LogedInUserId = []
+
+def isUserIdLoggedIn(userid):
+	if userid is not None:
+		if userid in LogedInUserId:
+			return True
+	return False
+
 def send_status(status, msg, code):
 	return jsonify({"status": status, "msg":msg}), code
 
@@ -40,8 +48,18 @@ def is_alive():
 def login():
 	json_payload = request.json
 	if json_payload is not None:
-		print(json_payload)
-		return Response(status=200)
+		ret = db_handling.CheckUserLogin(DATABASE_PATH, json_payload["username"],json_payload["password"])
+		if not ret :
+			return send_status("error", "failed to login as "+json_payload["username"], 400)
+
+		response = send_status("ok", "loged in as "+json_payload["username"], 200)
+
+		userid = db_handling.GetUuidToken()
+		LogedInUserId.append(userid)
+
+		response[0].set_cookie("userid",db_handling.GetUuidToken()) # This allows us to set a cookie on jsonify
+		return response
+
 	return Response(status=400)
 
 @APP.route('/add/user', methods=['POST'])
@@ -83,7 +101,7 @@ def add_user_content():
 		return jsonify({"status": "ok", "msg":"added content to user "+json_payload["username"], "link":token}), 200
 	return Response(status=400)
 
-@APP.route('/remove/user/link', methods=['POST'])
+@APP.route('/remove/user/link', methods=['DELETE'])
 @SCHEMA.validate(REMOVE_USER_LINK_SCHEMA)
 def remove_user_link():
 	json_payload = request.json

@@ -4,6 +4,9 @@ import shlex
 import subprocess
 import time
 import os
+import re
+
+from user_server import isUserIdLoggedIn, LogedInUserId
 
 class TestUserSrv(unittest.TestCase):
 
@@ -27,22 +30,15 @@ class TestUserSrv(unittest.TestCase):
 		if os.path.isfile(self.test_db):
 			os.remove(self.test_db)
 
+	def test_isUserIdLoggedIn(self):
+		self.assertFalse(isUserIdLoggedIn("toto"))
+		LogedInUserId.append("toto")
+		self.assertTrue(isUserIdLoggedIn("toto"))
+
 	# can be tested with :
 	# $ curl -X GET 127.0.0.1:<port>/isalive
 	def test_launchSrv(self):
 		response = requests.get(self.SrvUrl+"/isalive")
-		self.assertEqual(response.status_code,200)
-
-	# can be tested with:
-	# $ curl -v -X POST 127.0.0.1:9009/login -H "Content-Type: application/json"  -d '{"username":"value1", "password":"value2"}'
-	def test_login(self):
-		response = requests.post(self.SrvUrl+"/login")
-		self.assertEqual(response.status_code,403) #missing json payload
-
-		response = requests.post(self.SrvUrl+"/login",json={"key": "value"})
-		self.assertEqual(response.status_code,403) # bad json payload
-
-		response = requests.post(self.SrvUrl+"/login",json={"username":"value1", "password":"value2"})
 		self.assertEqual(response.status_code,200)
 
 	def test_add_user(self):
@@ -60,6 +56,33 @@ class TestUserSrv(unittest.TestCase):
 		self.assertEqual(response.status_code,200)
 
 		response = requests.delete(self.SrvUrl+"/remove/user",json={"username":"bbbb"})
+		self.assertEqual(response.status_code,400)
+
+	# can be tested with:
+	# $ curl -v -X POST 127.0.0.1:9009/login -H "Content-Type: application/json"  -d '{"username":"value1", "password":"value2"}'
+	def test_login(self):
+		response = requests.post(self.SrvUrl+"/login")
+		self.assertEqual(response.status_code,403) #missing json payload
+
+		response = requests.post(self.SrvUrl+"/login",json={"key": "value"})
+		self.assertEqual(response.status_code,403) # bad json payload
+
+		response = requests.post(self.SrvUrl+"/add/user",json={"username":"aaaa", "password":"aAaa#a9aa"})
+		self.assertEqual(response.status_code,200)
+
+		session = requests.Session()
+
+		response = session.post(self.SrvUrl+"/login",json={"username":"aaaa", "password":"aAaa#a9aa"})
+		self.assertEqual(response.status_code,200)
+
+		cookies = session.cookies.get_dict()
+		self.assertIn("userid",cookies)
+
+		regex = re.compile('^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}\Z', re.I)
+		match = regex.match(cookies["userid"]) # just checking that we are getting a string like uuid as intended
+		self.assertTrue(bool(match))
+
+		response = requests.post(self.SrvUrl+"/login",json={"username":"bbbb", "password":"aAaa#a9aa"})
 		self.assertEqual(response.status_code,400)
 
 	def test_add_user_content(self):
@@ -86,12 +109,12 @@ class TestUserSrv(unittest.TestCase):
 		resp_js = response.json()
 
 		link = resp_js["link"]
-		response = requests.post(self.SrvUrl+"/remove/user/link",json={"username":"aaaa", "link":link})
+		response = requests.delete(self.SrvUrl+"/remove/user/link",json={"username":"aaaa", "link":link})
 		self.assertEqual(response.status_code,200)
 
-		response = requests.post(self.SrvUrl+"/remove/user/link",json={"username":"aaaa", "link":link})
+		response = requests.delete(self.SrvUrl+"/remove/user/link",json={"username":"aaaa", "link":link})
 		self.assertEqual(response.status_code,400) # can't remove unexisting link
-		response = requests.post(self.SrvUrl+"/remove/user/link",json={"username":"bbbb", "link":link})
+		response = requests.delete(self.SrvUrl+"/remove/user/link",json={"username":"bbbb", "link":link})
 		self.assertEqual(response.status_code,400) # can't remove unexisting user
 
 	def test_get_link(self):
