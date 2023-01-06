@@ -48,8 +48,8 @@ def is_alive():
 def login():
 	json_payload = request.json
 	if json_payload is not None:
-		ret = db_handling.CheckUserLogin(DATABASE_PATH, json_payload["username"],json_payload["password"])
-		if not ret :
+		ret = db_handling.CheckUserLogin(DATABASE_PATH, json_payload["username"], json_payload["password"])
+		if not ret:
 			return send_status("error", "failed to login as "+json_payload["username"], 400)
 
 		response = send_status("ok", "loged in as "+json_payload["username"], 200)
@@ -57,7 +57,7 @@ def login():
 		userid = db_handling.GetUuidToken()
 		LogedInUserId.append(userid)
 
-		response[0].set_cookie("userid",db_handling.GetUuidToken()) # This allows us to set a cookie on jsonify
+		response[0].set_cookie("userid", db_handling.GetUuidToken()) # This allows us to set a cookie on jsonify
 		return response
 
 	return Response(status=400)
