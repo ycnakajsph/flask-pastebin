@@ -17,18 +17,16 @@ REMOVE_USER_SCHEMA = { \
 
 ADD_USER_LINK_SCHEMA = { \
 	"type" : "object", \
-	"required" : ["username", "content"], \
+	"required" : ["content"], \
 	"properties" : { \
-		"username" : {"type" : "string"}, \
 		"content" : {"type" : "string"}, \
 	}, \
 }
 
 REMOVE_USER_LINK_SCHEMA = { \
 	"type" : "object", \
-	"required" : ["username", "link"], \
+	"required" : ["link"], \
 	"properties" : { \
-		"username" : {"type" : "string"}, \
 		"link" : {"type" : "string"}, \
 	}, \
 }

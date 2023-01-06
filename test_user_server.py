@@ -16,6 +16,8 @@ class TestUserSrv(unittest.TestCase):
 	SrvAddr = "127.0.0.1"
 	SrvUrl = "http://" + SrvAddr + ":" + TestPort
 	test_db = "test_db.db"
+	username_ok = "aaaa"
+	password_ok = "aAaa#a9aa"
 
 	def setUp(self):
 		cmd = "python user_server.py --port="+self.TestPort+" --db="+self.test_db
@@ -31,9 +33,22 @@ class TestUserSrv(unittest.TestCase):
 			os.remove(self.test_db)
 
 	def test_isUserIdLoggedIn(self):
-		self.assertFalse(isUserIdLoggedIn("toto"))
-		LogedInUserId.append("toto")
-		self.assertTrue(isUserIdLoggedIn("toto"))
+		user_logs = {"username":"toto","userid":"abcd"}
+		self.assertFalse(isUserIdLoggedIn(user_logs))
+		self.assertFalse(None)
+		LogedInUserId.append(user_logs)
+		self.assertTrue(isUserIdLoggedIn("abcd"))
+
+	def add_user_and_login(self):
+		response = requests.post(self.SrvUrl+"/add/user",json={"username":self.username_ok, "password":self.password_ok})
+		self.assertEqual(response.status_code,200)
+
+		session = requests.Session()
+
+		response = session.post(self.SrvUrl+"/login",json={"username":self.username_ok, "password":self.password_ok})
+		self.assertEqual(response.status_code,200)
+
+		return session
 
 	# can be tested with :
 	# $ curl -X GET 127.0.0.1:<port>/isalive
@@ -67,13 +82,7 @@ class TestUserSrv(unittest.TestCase):
 		response = requests.post(self.SrvUrl+"/login",json={"key": "value"})
 		self.assertEqual(response.status_code,403) # bad json payload
 
-		response = requests.post(self.SrvUrl+"/add/user",json={"username":"aaaa", "password":"aAaa#a9aa"})
-		self.assertEqual(response.status_code,200)
-
-		session = requests.Session()
-
-		response = session.post(self.SrvUrl+"/login",json={"username":"aaaa", "password":"aAaa#a9aa"})
-		self.assertEqual(response.status_code,200)
+		session = self.add_user_and_login()
 
 		cookies = session.cookies.get_dict()
 		self.assertIn("userid",cookies)
@@ -85,44 +94,47 @@ class TestUserSrv(unittest.TestCase):
 		response = requests.post(self.SrvUrl+"/login",json={"username":"bbbb", "password":"aAaa#a9aa"})
 		self.assertEqual(response.status_code,400)
 
-	def test_add_user_content(self):
-		response = requests.post(self.SrvUrl+"/add/user",json={"username":"aaaa", "password":"aAaa#a9aa"})
-		self.assertEqual(response.status_code,200)
 
-		response = requests.post(self.SrvUrl+"/add/user/content",json={"username":"aaaa", "content":"lorem ipsum... blablabla"})
+	def test_add_user_content(self):
+		session = self.add_user_and_login()
+
+		response = session.post(self.SrvUrl+"/add/user/content",json={"content":"lorem ipsum... blablabla"})
 		self.assertEqual(response.status_code,200)
 
 		resp_js = response.json()
 		self.assertEqual(resp_js["status"],"ok")
 		self.assertIn("link",resp_js)
 
-	def test_add_user_content_bad_user(self):
-		response = requests.post(self.SrvUrl+"/add/user/content",json={"username":"aaaa", "content":"lorem ipsum... blablabla"})
-		self.assertEqual(response.status_code,400)
+	def test_add_user_content_no_auth(self):
+		response = requests.post(self.SrvUrl+"/add/user/content",json={"content":"lorem ipsum... blablabla"})
+		self.assertEqual(response.status_code,401)
 
 	def test_remove_user_link(self):
-		response = requests.post(self.SrvUrl+"/add/user",json={"username":"aaaa", "password":"aAaa#a9aa"})
-		self.assertEqual(response.status_code,200)
+		session = self.add_user_and_login()
 
-		response = requests.post(self.SrvUrl+"/add/user/content",json={"username":"aaaa", "content":"lorem ipsum... blablabla"})
+		response = session.post(self.SrvUrl+"/add/user/content",json={"content":"lorem ipsum... blablabla"})
 		self.assertEqual(response.status_code,200)
 		resp_js = response.json()
 
 		link = resp_js["link"]
-		response = requests.delete(self.SrvUrl+"/remove/user/link",json={"username":"aaaa", "link":link})
+		response = session.delete(self.SrvUrl+"/remove/user/link",json={"link":link})
 		self.assertEqual(response.status_code,200)
 
-		response = requests.delete(self.SrvUrl+"/remove/user/link",json={"username":"aaaa", "link":link})
+		response = session.delete(self.SrvUrl+"/remove/user/link",json={"link":link})
 		self.assertEqual(response.status_code,400) # can't remove unexisting link
-		response = requests.delete(self.SrvUrl+"/remove/user/link",json={"username":"bbbb", "link":link})
+		response = session.delete(self.SrvUrl+"/remove/user/link",json={"link":link})
 		self.assertEqual(response.status_code,400) # can't remove unexisting user
 
+	def test_remove_user_link_no_auth(self):
+		response = requests.post(self.SrvUrl+"/add/user/content",json={"content":"lorem ipsum... blablabla"})
+		self.assertEqual(response.status_code,401)
+
 	def test_get_link(self):
-		response = requests.post(self.SrvUrl+"/add/user",json={"username":"aaaa", "password":"aAaa#a9aa"})
-		self.assertEqual(response.status_code,200)
+		session = self.add_user_and_login()
+
 		txt = "lorem ipsum... blablabla"
 
-		response = requests.post(self.SrvUrl+"/add/user/content",json={"username":"aaaa", "content":txt})
+		response = session.post(self.SrvUrl+"/add/user/content",json={"content":txt})
 		self.assertEqual(response.status_code,200)
 		resp_js = response.json()
 
