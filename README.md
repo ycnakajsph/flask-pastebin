@@ -30,9 +30,7 @@ See schema : schemas/schemas.py LOGIN_SCHEMA
 
 ### @APP.route('/remove/user', methods=['DELETE'])
 
-This endpoint will remove an existing user from the database
-
-See schema : schemas/schemas.py REMOVE_USER_SCHEMA
+This endpoint will remove a loged in user from the database
 
 ### @APP.route('/add/user/content', methods=['POST'])
 

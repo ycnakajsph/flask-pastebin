@@ -6,7 +6,7 @@ import time
 import os
 import re
 
-from user_server import isUserIdLoggedIn, LogedInUserId
+from user_server import isUserIdLoggedIn, LogedInUserId, removeLogedInUserId
 
 class TestUserSrv(unittest.TestCase):
 
@@ -39,6 +39,9 @@ class TestUserSrv(unittest.TestCase):
 		LogedInUserId.append(user_logs)
 		self.assertTrue(isUserIdLoggedIn("abcd"))
 
+		self.assertTrue(removeLogedInUserId("abcd"))
+		self.assertEqual(len(LogedInUserId),0)
+
 	def add_user_and_login(self):
 		response = requests.post(self.SrvUrl+"/add/user",json={"username":self.username_ok, "password":self.password_ok})
 		self.assertEqual(response.status_code,200)
@@ -65,13 +68,15 @@ class TestUserSrv(unittest.TestCase):
 		self.assertEqual(response.status_code,400) # can't add a bad user/password couple
 
 	def test_remove_user(self):
-		response = requests.post(self.SrvUrl+"/add/user",json={"username":"aaaa", "password":"aAaa#a9aa"})
-		self.assertEqual(response.status_code,200)
-		response = requests.delete(self.SrvUrl+"/remove/user",json={"username":"aaaa"})
+		session = self.add_user_and_login()
+
+		response = session.delete(self.SrvUrl+"/remove/user")
 		self.assertEqual(response.status_code,200)
 
-		response = requests.delete(self.SrvUrl+"/remove/user",json={"username":"bbbb"})
-		self.assertEqual(response.status_code,400)
+	def test_remove_user_no_auth(self):
+		response = requests.delete(self.SrvUrl+"/remove/user")
+		self.assertEqual(response.status_code,401)
+
 
 	# can be tested with:
 	# $ curl -v -X POST 127.0.0.1:9009/login -H "Content-Type: application/json"  -d '{"username":"value1", "password":"value2"}'
@@ -94,6 +99,15 @@ class TestUserSrv(unittest.TestCase):
 		response = requests.post(self.SrvUrl+"/login",json={"username":"bbbb", "password":"aAaa#a9aa"})
 		self.assertEqual(response.status_code,400)
 
+	def test_logout(self):
+		session = self.add_user_and_login()
+
+		response = session.post(self.SrvUrl+"/logout")
+		self.assertEqual(response.status_code,200)
+
+	def test_logout_no_auth(self):
+		response = requests.post(self.SrvUrl+"/logout")
+		self.assertEqual(response.status_code,401)
 
 	def test_add_user_content(self):
 		session = self.add_user_and_login()
