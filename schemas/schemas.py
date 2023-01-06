@@ -7,14 +7,6 @@ LOGIN_SCHEMA = { \
 	}, \
 }
 
-REMOVE_USER_SCHEMA = { \
-	"type" : "object", \
-	"required" : ["username"], \
-	"properties" : { \
-		"username" : {"type" : "string"}, \
-	}, \
-}
-
 ADD_USER_LINK_SCHEMA = { \
 	"type" : "object", \
 	"required" : ["content"], \

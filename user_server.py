@@ -37,6 +37,14 @@ def getUsernameFromUserId(userid):
 				return user["username"]
 	return None
 
+def removeLogedInUserId(userid):
+	if userid is not None:
+		for user in LogedInUserId:
+			if userid == user["userid"]:
+				LogedInUserId.remove({"userid":user["userid"], "username":user["username"]})
+				return True
+	return False
+
 def loginRequired(f):
 	@wraps(f)
 	def decorated_function(*args, **kwargs):
@@ -80,6 +88,18 @@ def login():
 
 	return Response(status=400)
 
+@APP.route('/logout', methods=['POST'])
+@loginRequired
+def logout():
+	userid = request.cookies.get('userid')
+	username = getUsernameFromUserId(userid)
+
+	if userid is not None and username is not None:
+		if removeLogedInUserId(userid):
+			return send_status("ok", "logout user "+username, 200)
+		return send_status("ko", "can't logout user "+username, 400)
+	return Response(status=400)
+
 @APP.route('/add/user', methods=['POST'])
 @SCHEMA.validate(LOGIN_SCHEMA)
 def add_user():
@@ -92,14 +112,17 @@ def add_user():
 	return Response(status=400)
 
 @APP.route('/remove/user', methods=['DELETE'])
-@SCHEMA.validate(REMOVE_USER_SCHEMA)
+@loginRequired
 def remove_user():
-	json_payload = request.json
-	if json_payload is not None:
-		ret = db_handling.RemoveUser(DATABASE_PATH, json_payload["username"])
+	userid = request.cookies.get('userid')
+	username = getUsernameFromUserId(userid)
+
+	if username is not None:
+		ret = db_handling.RemoveUser(DATABASE_PATH, username)
 		if not ret:
-			return send_status("error", "failed to remove user "+json_payload["username"], 400)
-		return send_status("ok", "removed user "+json_payload["username"], 200)
+			return send_status("error", "failed to remove user "+username, 400)
+		removeLogedInUserId(userid)
+		return send_status("ok", "removed user "+username, 200)
 	return Response(status=400)
 
 @APP.route('/add/user/content', methods=['POST'])
